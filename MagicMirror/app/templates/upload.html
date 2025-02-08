@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload new Clothing</title>
+</head>
+<body>
+<h1>Upload new Clothing</h1>
+<form method="post" enctype="multipart/form-data" action="/">
+  <input type="file" name="clothingImage" required>
+  <select name="clothingType">
+    <option value="shirt">Shirt</option>
+    <option value="pants">Pants</option>
+    <option value="jacket">Jacket</option>
+    <!-- Add other categories as needed -->
+  </select>
+  <input type="submit" value="Upload">
+</form>
+</body>
+</html>

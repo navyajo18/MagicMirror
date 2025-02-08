@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Clothing Items</title>
+</head>
+<body>
+<h1>Clothing Items</h1>
+{% for item in items %}
+  <div>
+    <h2>{{ item['type'] }}</h2>
+    <img src="{{ url_for('uploaded_file', filename=item['image_path']) }}" alt="{{ item['type'] }}">
+  </div>
+{% endfor %}
+</body>
+</html>
