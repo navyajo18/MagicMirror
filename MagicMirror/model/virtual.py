@@ -30,7 +30,7 @@ def overlay_transparent(background, overlay, x, y):
 
 def virtual_try_on():
     cap = cv2.VideoCapture(0)  # Open webcam
-    clothing = cv2.imread("clothing.png", cv2.IMREAD_UNCHANGED)  # Load transparent clothing image
+    clothing = cv2.imread(r"C:\Users\navya\Downloads\shirt.png", cv2.IMREAD_UNCHANGED)  # Load transparent clothing image
 
     if clothing is None:
         print("Error: Could not load clothing image.")

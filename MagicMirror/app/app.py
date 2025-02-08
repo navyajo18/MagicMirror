@@ -42,7 +42,7 @@ def upload_file():
             filename = secure_filename(file.filename)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
-            save_clothing_item(type, filepath)
+            save_clothing_item(type, filename)
             return redirect(url_for('uploaded_file', filename=filename))
     return render_template('upload.html')
 
@@ -58,10 +58,18 @@ def uploaded_file(filename):
 
 @app.route('/clothing/<type>')
 def show_clothing(type):
-    items = []
     with get_db_connection() as conn:
         items = conn.execute('SELECT * FROM clothing WHERE type = ?', (type,)).fetchall()
     return render_template('show_clothing.html', items=items)
+
+@app.route('/wardrobe')
+def wardrobe():
+    with get_db_connection() as conn:
+        items = conn.execute('SELECT * FROM clothing').fetchall()
+    wardrobe = {}
+    for item in items:
+        wardrobe.setdefault(item['type'], []).append(item)
+    return render_template('wardrobe.html', wardrobe=wardrobe)
 
 if __name__ == '__main__':
     app.run(debug=True)

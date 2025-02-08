@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Wardrobe</title>
+</head>
+<body>
+  <h1>Wardrobe</h1>
+  {% for clothing_type, items in wardrobe.items() %}
+    <h2>{{ clothing_type }}</h2>
+    {% for item in items %}
+      <div>
+        <img src="{{ url_for('uploaded_file', filename=item['image_path']) }}" alt="{{ clothing_type }}" width="200">
+      </div>
+    {% endfor %}
+  {% endfor %}
+  {% if not wardrobe %}
+    <p>Your wardrobe is empty!</p>
+  {% endif %}
+  <a href="{{ url_for('upload_file') }}">Upload New Clothing</a>
+</body>
+</html>
