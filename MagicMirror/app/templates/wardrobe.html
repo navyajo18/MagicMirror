@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Wardrobe</title>
+</head>
+<body>
+  <h1>Wardrobe</h1>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <p>{{ messages[0] }}</p>
+    {% endif %}
+  {% endwith %}
+
+  {% for clothing_type, items in wardrobe.items() %}
+    <h2>{{ clothing_type }}</h2>
+    {% for item in items %}
+      <div>
+        <img src="{{ url_for('uploaded_file', filename=item['image_path']) }}" alt="{{ clothing_type }}" width="200">
+        <form method="post" action="{{ url_for('delete_item', item_id=item['id']) }}">
+          <button type="submit">Remove</button>
+        </form>
+      </div>
+    {% endfor %}
+  {% endfor %}
+  
+  {% if not wardrobe %}
+    <p>Your wardrobe is empty!</p>
+  {% endif %}
+
+  <a href="{{ url_for('upload_file') }}">Upload New Clothing</a>
+</body>
+</html>
