@@ -2,21 +2,29 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Upload new Clothing</title>
+  <title>Upload New Clothing</title>
 </head>
 <body>
-<h1>Upload new Clothing</h1>
-<form method="post" enctype="multipart/form-data" action="/">
-  <input type="file" name="clothingImage" required>
-  <select name="clothingType">
-    <option value="shirt">Shirt</option>
-    <option value="pants">Pants</option>
-    <option value="jacket">Jacket</option>
-    <!-- Add other categories as needed -->
-  </select>
-  <input type="submit" value="Upload">
-</form>
+  <h1>Upload New Clothing</h1>
+
+  <!-- Display Flash Messages without Bullet Points -->
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <p>{{ messages[0] }}</p>
+    {% endif %}
+  {% endwith %}
+
+  <form method="post" enctype="multipart/form-data" action="/">
+    <input type="file" name="clothingImage" required>
+    <select name="clothingType">
+      <option value="shirt">Shirt</option>
+      <option value="pant">Pant</option>
+      <option value="jacket">Jacket</option>
+    </select>
+    <input type="submit" value="Upload">
+  </form>
+
+  <!-- Link to Wardrobe -->
+  <a href="{{ url_for('wardrobe') }}">View Wardrobe</a>
 </body>
 </html>
-
-<a href="{{ url_for('wardrobe') }}">Wardrobe</a>
