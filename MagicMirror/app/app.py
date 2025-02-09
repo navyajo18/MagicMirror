@@ -6,15 +6,17 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Needed for flashing messages
 
-# Directory to store uploaded images
-UPLOAD_FOLDER = 'uploads'
-# Directory to store uploaded images (inside app folder)
+# Base directory for uploads
 UPLOAD_FOLDER = os.path.join(app.root_path, 'uploads')
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Ensure the upload folder exists
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# Create specific folders for 'SHIRTS' and 'PANTS'
+SHIRT_FOLDER = os.path.join(UPLOAD_FOLDER, 'SHIRTS')
+PANTS_FOLDER = os.path.join(UPLOAD_FOLDER, 'PANTS')
+os.makedirs(SHIRT_FOLDER, exist_ok=True)
+os.makedirs(PANTS_FOLDER, exist_ok=True)
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 DATABASE = 'virtual_try_on.db'
 
@@ -40,22 +42,28 @@ def allowed_file(filename):
 def upload_file():
     if request.method == 'POST':
         file = request.files['clothingImage']
-        type = request.form['clothingType']
+        clothing_type = request.form['clothingType']
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            if clothing_type == 'shirt':
+                filepath = os.path.join(SHIRT_FOLDER, filename)
+            elif clothing_type == 'pant':
+                filepath = os.path.join(PANTS_FOLDER, filename)
+            else:
+                filepath = os.path.join(UPLOAD_FOLDER, filename)  # Default case for other types
             file.save(filepath)
-            save_clothing_item(type, filename)  # Save only the filename
-            flash(f"You've uploaded a {type}!")
+            save_clothing_item(clothing_type, filepath)  # Save path in DB might need updating
+            flash(f"You've uploaded a {clothing_type}!")
     return render_template('upload.html')
 
-def save_clothing_item(type, image_path):
+def save_clothing_item(clothing_type, filepath):
     with get_db_connection() as conn:
-        conn.execute('INSERT INTO clothing (type, image_path) VALUES (?, ?)', (type, image_path))
+        conn.execute('INSERT INTO clothing (type, image_path) VALUES (?, ?)', (clothing_type, os.path.relpath(filepath, UPLOAD_FOLDER)))
         conn.commit()
 
-@app.route('/uploads/<filename>')
+@app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
+    print("Trying to serve:", filename)  # Debugging
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/clothing/<type>')
