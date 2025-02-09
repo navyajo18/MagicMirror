@@ -7,6 +7,8 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import random
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
@@ -28,6 +30,9 @@ DATABASE = 'virtual_try_on.db'
 # Global variables to store selected clothing paths
 selected_shirt_path = None
 selected_pants_path = None
+
+# Load the trained model
+model = load_model("clothing_classifier.h5")
 
 # Initialize MediaPipe Pose
 camera = cv2.VideoCapture(0)
@@ -121,7 +126,37 @@ def shuffle_clothing(clothing_type):
     elif clothing_type == 'pant':
         selected_pants_path = image_path
 
-    return jsonify({'image_path': url_for('uploaded_file', filename=random_item['image_path'])})
+    # Get clothing combination rating
+    rating = "Not rated"
+    if selected_shirt_path and selected_pants_path:
+        rating = predict_clothing_quality(selected_shirt_path, selected_pants_path)
+
+    return jsonify({
+        'image_path': url_for('uploaded_file', filename=random_item['image_path']),
+        'rating': rating
+    })
+
+def predict_clothing_quality(shirt_path, pants_path):
+    # Load shirt and pants images and preprocess them
+    shirt_img = image.load_img(shirt_path, target_size=(150, 150))
+    pants_img = image.load_img(pants_path, target_size=(150, 150))
+    
+    shirt_img = image.img_to_array(shirt_img) / 255.0
+    pants_img = image.img_to_array(pants_img) / 255.0
+
+    # Check if both images are loaded correctly before combining
+    if shirt_img is None or pants_img is None:
+        return "Error loading images"
+
+    # Predict using the model: predict each item individually and then combine
+    shirt_prediction = model.predict(np.expand_dims(shirt_img, axis=0))
+    pants_prediction = model.predict(np.expand_dims(pants_img, axis=0))
+
+    # Calculate the average prediction of shirt and pants for the combination
+    combined_prediction = np.mean([shirt_prediction, pants_prediction])
+
+    # Return 'Good' or 'Bad' based on the prediction
+    return 'Good' if combined_prediction > 0.5 else 'Bad'
 
 @app.route('/video_feed')
 def video_feed():
@@ -151,7 +186,6 @@ def generate_frames():
         if not success:
             break
 
-        frame = cv2.flip(frame, 1)
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = pose.process(frame_rgb)
 
