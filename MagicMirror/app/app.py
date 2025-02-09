@@ -84,5 +84,19 @@ def delete_item(item_id):
             flash('Item removed from wardrobe.')
     return redirect(url_for('wardrobe'))
 
+from flask import Response
+
+@app.route('/video_feed')
+def video_feed():
+    from virtual import generate_frames
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/try_it_on')
+def try_it_on():
+    return render_template('try_it_on.html')
+
+
 if __name__ == '__main__':
     app.run(debug=True)
+
+
