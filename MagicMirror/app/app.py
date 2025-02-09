@@ -1,7 +1,8 @@
 import sqlite3
 import os
-from flask import Flask, request, render_template, redirect, url_for, flash, send_from_directory
+from flask import Flask, request, render_template, redirect, url_for, flash, send_from_directory, Response
 from werkzeug.utils import secure_filename
+import cv2
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Needed for flashing messages
@@ -94,11 +95,24 @@ def delete_item(item_id):
             flash('Item removed from wardrobe.')
     return redirect(url_for('wardrobe'))
 
-from flask import Response
+# Video feed setup
+camera = cv2.VideoCapture(0)
+
+def generate_frames():
+    while True:
+        # Read the camera frame
+        success, frame = camera.read()
+        if not success:
+            break
+        else:
+            ret, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
+
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 @app.route('/video_feed')
 def video_feed():
-    from virtual import generate_frames
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/try_it_on')

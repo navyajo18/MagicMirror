@@ -27,11 +27,11 @@ def overlay_transparent(background, overlay, x, y):
     return background
 
 def virtual_try_on():
-    cap = cv2.VideoCapture(0)  # Open webcam
+    cap = cv2.VideoCapture(1)  # Open webcam
     
     # Load t-shirt and pants images (replace with correct paths)
-    tshirt_path = r"C:\Users\venka\OneDrive\Desktop\tshirtrn.png"
-    pants_path = r"C:\Users\venka\OneDrive\Desktop\pants.png"
+    tshirt_path = "MagicMirror/app/uploads/SHIRTS/image_1.png"
+    pants_path = "MagicMirror/app/uploads/PANTS/image-2.png"
     
     tshirt = cv2.imread(tshirt_path, cv2.IMREAD_UNCHANGED)  # Load transparent t-shirt image
     pants = cv2.imread(pants_path, cv2.IMREAD_UNCHANGED)  # Load transparent pants image
