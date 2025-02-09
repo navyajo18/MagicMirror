@@ -1,14 +1,48 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Try It On!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Try It On</title>
+    <style>
+        /* Video container to center the video on the page */
+        .video-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        /* Resize the video */
+        #video {
+            width: 800px; /* Set a specific width for the video */
+            height: 550px; /* Set a specific height to maintain aspect ratio */
+        }
+
+        /* Styling for the back button */
+        .back-btn {
+            display: inline-block;
+            margin: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .back-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
     <h1>Virtual Try-On</h1>
-    <p>Use the camera feed to try on outfits from your wardrobe.</p>
-    <img src="{{ url_for('video_feed') }}" alt="Virtual Try-On Stream">
 
-    <a href="{{ url_for('wardrobe') }}">Back to Wardrobe</a>
+    <!-- Back button -->
+    <a href="{{ url_for('wardrobe') }}" class="back-btn">Back</a>
+
+    <div class="video-container">
+        <img src="{{ url_for('video_feed') }}" alt="Video Feed" id="video">
+    </div>
 </body>
 </html>

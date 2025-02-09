@@ -132,16 +132,33 @@ def generate_frames():
     tshirt = cv2.imread(tshirt_path, cv2.IMREAD_UNCHANGED)  # Load transparent t-shirt image
     pants = cv2.imread(pants_path, cv2.IMREAD_UNCHANGED)  # Load transparent pants image
 
-    if tshirt is None or pants is None:
-        print(f"Error: Could not load clothing images. Check the file paths.")
+    # Ensure the overlay images are valid before proceeding
+    if tshirt is None or pants is None or tshirt.shape[0] == 0 or tshirt.shape[1] == 0 or pants.shape[0] == 0 or pants.shape[1] == 0:
+        print("Error: Invalid or empty overlay images. Skipping overlay.")
+        while True:
+            success, frame = camera.read()
+            if not success:
+                break
+            ret, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
         return
+
+    frame_skip = 3  # Skip every 3 frames to reduce processing load
+    frame_count = 0  # Frame counter for skipping
 
     while True:
         # Read the camera frame in BGR (OpenCV default)
         success, frame = camera.read()
         if not success:
             break
-        
+
+        # Skip frames to reduce the processing load
+        frame_count += 1
+        if frame_count % frame_skip != 0:
+            continue
+
         # Convert the frame to RGB for pose detection only
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = pose.process(frame_rgb)
@@ -176,7 +193,7 @@ def generate_frames():
             x1, y1 = int(left_hip.x * img_w), int(left_hip.y * img_h)
             x2, y2 = int(right_hip.x * img_w), int(right_hip.y * img_h)
 
-            pants_width = max(int(abs(x2 - x1) * 1.8), 1)  
+            pants_width = max(int(abs(x2 - x1) * 2.8), 1)  
             pants_height = max(int(pants.shape[0] * (pants_width / pants.shape[1])), 1)
 
             pants_resized = cv2.resize(pants, (pants_width, pants_height))
@@ -194,6 +211,8 @@ def generate_frames():
 
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+
 
 @app.route('/video_feed')
 def video_feed():
