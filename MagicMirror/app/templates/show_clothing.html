@@ -3,45 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <title>Clothing Items</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f0f8ff;
-      text-align: center;
-    }
-    h1 {
-      color: #ff4500;
-    }
-    div {
-      display: inline-block;
-      margin: 10px;
-      padding: 10px;
-      border: 2px solid #4682b4;
-      border-radius: 10px;
-      background-color: #e6f7ff;
-      width: 200px;
-    }
-    img {
-      width: 100%;
-      border-radius: 10px;
-    }
-    a {
-      display: block;
-      margin: 20px auto;
-      color: #007acc;
-      font-weight: bold;
-      text-decoration: none;
-    }
-  </style>
+  <link rel="stylesheet" href="magical.css">
 </head>
 <body>
-  <h1>Clothing Items</h1>
+  <h1 style="color: #745C97;">Clothing Items</h1>
   {% for item in items %}
     <div>
-      <h2>{{ item['type'] }}</h2>
+      <h2 style="color: #39375b;">{{ item['type'] }}</h2>
       <img src="{{ url_for('uploaded_file', filename=item['image_path']) }}" alt="{{ item['type'] }}">
     </div>
   {% endfor %}
-  <a href="{{ url_for('wardrobe') }}">Wardrobe</a>
+  <a href="{{ url_for('wardrobe') }}" style="color: #DC6ACF;">Wardrobe</a>
 </body>
 </html>

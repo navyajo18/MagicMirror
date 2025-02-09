@@ -3,44 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title>Upload New Clothing</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #faf0e6;
-      text-align: center;
-    }
-    h1 {
-      color: #228b22;
-    }
-    form {
-      background-color: #ffe4c4;
-      padding: 20px;
-      border-radius: 15px;
-      display: inline-block;
-      text-align: left;
-    }
-    input, select {
-      margin: 10px 0;
-      padding: 8px;
-      width: 100%;
-    }
-    input[type="submit"] {
-      background-color: #4682b4;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    a {
-      display: block;
-      margin: 20px auto;
-      color: #8b0000;
-      font-weight: bold;
-      text-decoration: none;
-    }
-  </style>
+  <link rel="stylesheet" href="magical.css">
 </head>
 <body>
-  <h1>Upload New Clothing</h1>
+  <h1 style="color: #745C97;">Upload New Clothing</h1>
   {% with messages = get_flashed_messages() %}
     {% if messages %}
       <p>{{ messages[0] }}</p>
@@ -55,6 +21,6 @@
     </select>
     <input type="submit" value="Upload">
   </form>
-  <a href="{{ url_for('wardrobe') }}">View Wardrobe</a>
+  <a href="{{ url_for('wardrobe') }}" style="color: #DC6ACF;">View Wardrobe</a>
 </body>
 </html>
