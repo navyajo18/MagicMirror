@@ -27,7 +27,7 @@ def overlay_transparent(background, overlay, x, y):
     return background
 
 def virtual_try_on():
-    cap = cv2.VideoCapture(1)  # Open webcam
+    cap = cv2.VideoCapture(0)  # Open webcam
     
     # Load t-shirt and pants images (replace with correct paths)
     tshirt_path = r"C:\Users\venka\OneDrive\Desktop\tshirtrn.png"
