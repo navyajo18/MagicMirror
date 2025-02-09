@@ -1,110 +1,88 @@
-import cv2
-import numpy as np
-import mediapipe as mp
+import sqlite3
+import os
+from flask import Flask, request, render_template, redirect, url_for, flash, send_from_directory
+from werkzeug.utils import secure_filename
 
-# Initialize Mediapipe Pose
-mp_pose = mp.solutions.pose
-pose = mp_pose.Pose()
+app = Flask(__name__)
+app.secret_key = 'supersecretkey'  # Needed for flashing messages
 
-# Function to overlay transparent images (clothing)
-def overlay_transparent(background, overlay, x, y):
-    overlay_h, overlay_w = overlay.shape[:2]
+# Directory to store uploaded images
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-    # Ensure overlay does not exceed frame size
-    if x + overlay_w > background.shape[1] or y + overlay_h > background.shape[0]:
-        return background
+# Ensure the upload folder exists
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-    overlay_rgb = overlay[:, :, :3]  # Extract RGB channels
-    alpha_mask = overlay[:, :, 3] / 255.0  # Normalize alpha (0 to 1)
+DATABASE = 'virtual_try_on.db'
 
-    roi = background[y:y+overlay_h, x:x+overlay_w]
+def get_db_connection():
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-    # Blend overlay with background using the alpha channel
-    for c in range(3):  
-        roi[:, :, c] = (1 - alpha_mask) * roi[:, :, c] + alpha_mask * overlay_rgb[:, :, c]
+def init_db():
+    with get_db_connection() as conn:
+        conn.execute('''CREATE TABLE IF NOT EXISTS clothing (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        type TEXT NOT NULL,
+                        image_path TEXT NOT NULL)''')
+        conn.commit()
 
-    background[y:y+overlay_h, x:x+overlay_w] = roi
-    return background
+init_db()  # Ensure the database and table are created
 
-def virtual_try_on():
-    cap = cv2.VideoCapture(1)  # Open webcam
-    
-    # Load t-shirt and pants images (replace with correct paths)
-    tshirt_path = r"C:\Users\venka\OneDrive\Desktop\tshirtrn.png"
-    pants_path = r"C:\Users\venka\OneDrive\Desktop\pants.png"
-    
-    tshirt = cv2.imread(tshirt_path, cv2.IMREAD_UNCHANGED)  # Load transparent t-shirt image
-    pants = cv2.imread(pants_path, cv2.IMREAD_UNCHANGED)  # Load transparent pants image
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-    if tshirt is None or pants is None:
-        print(f"Error: Could not load clothing images. Check the file paths.")
-        return
+@app.route('/', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        file = request.files['clothingImage']
+        type = request.form['clothingType']
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            save_clothing_item(type, filename)  # Save only the filename
+            flash(f"You've uploaded a {type}!")
+    return render_template('upload.html')
 
-    while True:
-        ret, frame = cap.read()
+def save_clothing_item(type, image_path):
+    with get_db_connection() as conn:
+        conn.execute('INSERT INTO clothing (type, image_path) VALUES (?, ?)', (type, image_path))
+        conn.commit()
 
-        # If frame is not successfully read, continue without exiting
-        if not ret:
-            print("Error: Unable to read from webcam. Continuing...")
-            continue
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = pose.process(frame_rgb)
+@app.route('/clothing/<type>')
+def show_clothing(type):
+    with get_db_connection() as conn:
+        items = conn.execute('SELECT * FROM clothing WHERE type = ?', (type,)).fetchall()
+    return render_template('show_clothing.html', items=items)
 
-        if results.pose_landmarks:
-            landmarks = results.pose_landmarks.landmark
+@app.route('/wardrobe')
+def wardrobe():
+    with get_db_connection() as conn:
+        items = conn.execute('SELECT * FROM clothing').fetchall()
+    wardrobe = {}
+    for item in items:
+        wardrobe.setdefault(item['type'], []).append(item)
+    return render_template('wardrobe.html', wardrobe=wardrobe)
 
-            # T-shirt: Using shoulder landmarks (LEFT_SHOULDER, RIGHT_SHOULDER)
-            left_shoulder = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER]
-            right_shoulder = landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER]
+@app.route('/delete/<int:item_id>', methods=['POST'])
+def delete_item(item_id):
+    with get_db_connection() as conn:
+        item = conn.execute('SELECT image_path FROM clothing WHERE id = ?', (item_id,)).fetchone()
+        if item:
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], item['image_path'])
+            if os.path.exists(image_path):
+                os.remove(image_path)
+            conn.execute('DELETE FROM clothing WHERE id = ?', (item_id,))
+            conn.commit()
+            flash('Item removed from wardrobe.')
+    return redirect(url_for('wardrobe'))
 
-            img_h, img_w, _ = frame.shape
-            x1, y1 = int(left_shoulder.x * img_w), int(left_shoulder.y * img_h)
-            x2, y2 = int(right_shoulder.x * img_w), int(right_shoulder.y * img_h)
-
-            tshirt_width = max(int(abs(x2 - x1) * 1.4), 1)  
-            tshirt_height = max(int(tshirt.shape[0] * (tshirt_width / tshirt.shape[1])), 1)
-
-            tshirt_resized = cv2.resize(tshirt, (tshirt_width, tshirt_height))
-
-            x_center = (x1 + x2) // 2
-            x_pos = x_center - (tshirt_width // 2)
-
-            y_pos = min(y1, y2) - tshirt_height // 8
-
-            frame = overlay_transparent(frame, tshirt_resized, x_pos, y_pos)
-
-            # Pants: Using hip landmarks (LEFT_HIP, RIGHT_HIP)
-            left_hip = landmarks[mp_pose.PoseLandmark.LEFT_HIP]
-            right_hip = landmarks[mp_pose.PoseLandmark.RIGHT_HIP]
-
-            x1, y1 = int(left_hip.x * img_w), int(left_hip.y * img_h)
-            x2, y2 = int(right_hip.x * img_w), int(right_hip.y * img_h)
-
-            pants_width = max(int(abs(x2 - x1) * 1.8), 1)  
-            pants_height = max(int(pants.shape[0] * (pants_width / pants.shape[1])), 1)
-
-            pants_resized = cv2.resize(pants, (pants_width, pants_height))
-
-            x_center = (x1 + x2) // 2
-            x_pos = x_center - (pants_width // 2)
-
-            y_pos = min(y1, y2)  # Position pants just below the hips
-
-            frame = overlay_transparent(frame, pants_resized, x_pos, y_pos)
-
-        # If no person detected, just show the webcam feed (without overlay)
-        else:
-            print("No person detected, continuing...")  
-
-        cv2.imshow("Virtual Try-On", frame)
-
-        # Exit the loop if 'q' is pressed
-        if cv2.waitKey(1) & 0xFF == ord('q'):  
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-# Run the virtual try-on application for both t-shirt and pants
-virtual_try_on()
+if __name__ == '__main__':
+    app.run(debug=True)

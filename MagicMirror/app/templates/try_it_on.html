@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Try It On!</title>
+</head>
+<body>
+    <h1>Virtual Try-On</h1>
+    <p>Use the camera feed to try on outfits from your wardrobe.</p>
+    <img src="{{ url_for('video_feed') }}" alt="Virtual Try-On Stream">
+
+    <a href="{{ url_for('wardrobe') }}">Back to Wardrobe</a>
+</body>
+</html>

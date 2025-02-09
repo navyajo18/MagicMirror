@@ -6,8 +6,8 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Needed for flashing messages
 
-# Directory to store uploaded images
-UPLOAD_FOLDER = 'uploads'
+# Directory to store uploaded images (inside app folder)
+UPLOAD_FOLDER = os.path.join(app.root_path, 'uploads')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -83,6 +83,17 @@ def delete_item(item_id):
             conn.commit()
             flash('Item removed from wardrobe.')
     return redirect(url_for('wardrobe'))
+
+from flask import Response
+
+@app.route('/video_feed')
+def video_feed():
+    from virtual import generate_frames
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/try_it_on')
+def try_it_on():
+    return render_template('try_it_on.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
