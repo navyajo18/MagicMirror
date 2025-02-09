@@ -244,6 +244,23 @@ def generate_frames():
 def try_it_on():
     return render_template('try_it_on.html')
 
+@app.route('/relaunch_video')
+def relaunch_video():
+    global camera, selected_shirt_path, selected_pants_path
+
+    # Release the current camera
+    camera.release()
+
+    # Reinitialize the camera
+    camera = cv2.VideoCapture(0)
+
+    # Reset the clothing paths to clear any current selections
+    selected_shirt_path = None
+    selected_pants_path = None
+
+    return jsonify({"status": "success"})
+
+
 if __name__ == '__main__':
     try:
         app.run(debug=True)

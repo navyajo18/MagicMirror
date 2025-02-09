@@ -110,5 +110,24 @@
         <h2>Live Video Preview</h2>
         <img src="/video_feed" alt="Video Feed" style="width: 100%; height: auto;">
     </div>
+    <button onclick="relaunchVideo()">Relaunch Video</button>
+
+<script>
+    // Function to relaunch the video feed and reset overlays
+    function relaunchVideo() {
+        fetch('/relaunch_video')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Video feed and clothing overlays restarted successfully!');
+                    location.reload();  // Reload the page to restart everything
+                }
+            })
+            .catch(error => {
+                alert('Error restarting video feed: ' + error.message);
+            });
+    }
+</script>
+
 </body>
 </html>
