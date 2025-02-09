@@ -174,7 +174,7 @@ def predict_clothing_quality(shirt_path, pants_path):
         "Mirror verdict: This look needs some magic rework."
     ]
 
-    return random.choice(positive_messages) if combined_prediction > 0.5 else random.choice(negative_messages)
+    return random.choice(negative_messages) if combined_prediction > 0.5 else random.choice(positive_messages)
 
 
 @app.route('/video_feed')

@@ -57,6 +57,28 @@
             border-radius: 10px;
             overflow: hidden;
         }
+
+        /* New styles for AI suggestion box */
+        .ai-suggestion-box {
+            margin: 30px auto;
+            padding: 20px;
+            width: 60%;
+            background-color: #F5B0CB;
+            border: 2px solid #DC6ACF;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .ai-suggestion-box h2 {
+            font-family: 'Cinzel Decorative', serif;
+            color: #745C97;
+            margin-bottom: 15px;
+        }
+
+        .ai-suggestion-box p {
+            font-size: 20px;
+            color: #39375b;
+        }
     </style>
     <script>
         // Function to shuffle and display clothing
@@ -79,7 +101,7 @@
 
         // Function to go back to home
         function goBack() {
-            window.location.href = 'wardrobe.html'; // Replace '/' with the actual homepage URL if different
+            window.location.href = "{{ url_for('wardrobe') }}";
         }
     </script>
 </head>
@@ -103,8 +125,11 @@
         <button onclick="shuffleClothing('pant', 'pants-image')">Shuffle Pants</button>
     </div>
 
-    <h2>Clothing Rating</h2>
-    <p id="clothing-rating">Not rated</p>
+    <!-- AI Suggestion Box -->
+    <div class="ai-suggestion-box">
+        <h2>Your Personalized AI Suggestion</h2>
+        <p id="clothing-rating">Not rated</p>
+    </div>
 
     <div class="video-frame">
         <h2>Live Video Preview</h2>
