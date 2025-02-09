@@ -5,7 +5,7 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
 import os
 
 # Define dataset path
-DATASET_PATH = r"C:\Users\navya\OneDrive\Desktop\MagicMirror\MagicMirror\model\dataset"
+DATASET_PATH = "/Users/aartipotnuru/VisualStudio/HackHers2025/MagicMirror/MagicMirror/model/dataset"
 
 # Image Data Generator for training and validation
 datagen = ImageDataGenerator(

@@ -1,5 +1,6 @@
 
-dataset
+dataset/
+clothing_classifier.h5
 
 
 # Byte-compiled / optimized / DLL files
