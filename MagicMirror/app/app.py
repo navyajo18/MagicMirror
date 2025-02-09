@@ -1,20 +1,21 @@
 import sqlite3
 import os
-from flask import Flask, request, render_template, redirect, url_for, flash, send_from_directory, Response
+import time
+from flask import Flask, request, render_template, redirect, url_for, flash, send_from_directory, Response, jsonify
 from werkzeug.utils import secure_filename
 import cv2
 import mediapipe as mp
 import numpy as np
-import random  # Import to handle random selection
+import random
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'  # Needed for flashing messages
+app.secret_key = 'supersecretkey'
 
 # Base directory for uploads
 UPLOAD_FOLDER = os.path.join(app.root_path, 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Create specific folders for 'SHIRTS' and 'PANTS'
+# Create folders for clothing categories
 SHIRT_FOLDER = os.path.join(UPLOAD_FOLDER, 'SHIRTS')
 PANTS_FOLDER = os.path.join(UPLOAD_FOLDER, 'PANTS')
 os.makedirs(SHIRT_FOLDER, exist_ok=True)
@@ -23,6 +24,15 @@ os.makedirs(PANTS_FOLDER, exist_ok=True)
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 DATABASE = 'virtual_try_on.db'
+
+# Global variables to store selected clothing paths
+selected_shirt_path = None
+selected_pants_path = None
+
+# Initialize MediaPipe Pose
+camera = cv2.VideoCapture(0)
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose()
 
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
@@ -37,7 +47,7 @@ def init_db():
                         image_path TEXT NOT NULL)''')
         conn.commit()
 
-init_db()  # Ensure the database and table are created
+init_db()
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -54,9 +64,9 @@ def upload_file():
             elif clothing_type == 'pant':
                 filepath = os.path.join(PANTS_FOLDER, filename)
             else:
-                filepath = os.path.join(UPLOAD_FOLDER, filename)  # Default case for other types
+                filepath = os.path.join(UPLOAD_FOLDER, filename)
             file.save(filepath)
-            save_clothing_item(clothing_type, filepath)  # Save path in DB might need updating
+            save_clothing_item(clothing_type, filepath)
             flash(f"You've uploaded a {clothing_type}!")
     return render_template('upload.html')
 
@@ -67,14 +77,7 @@ def save_clothing_item(clothing_type, filepath):
 
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
-    print("Trying to serve:", filename)  # Debugging
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-@app.route('/clothing/<type>')
-def show_clothing(type):
-    with get_db_connection() as conn:
-        items = conn.execute('SELECT * FROM clothing WHERE type = ?', (type,)).fetchall()
-    return render_template('show_clothing.html', items=items)
 
 @app.route('/wardrobe')
 def wardrobe():
@@ -98,135 +101,102 @@ def delete_item(item_id):
             flash('Item removed from wardrobe.')
     return redirect(url_for('wardrobe'))
 
-# Video feed setup
-camera = cv2.VideoCapture(1)
+@app.route('/shuffle_clothing/<clothing_type>')
+def shuffle_clothing(clothing_type):
+    """API to randomly shuffle a clothing item."""
+    global selected_shirt_path, selected_pants_path
 
-# Initialize MediaPipe Pose
-mp_pose = mp.solutions.pose
-pose = mp_pose.Pose()
+    with get_db_connection() as conn:
+        items = conn.execute('SELECT * FROM clothing WHERE type = ?', (clothing_type,)).fetchall()
 
-# Function to overlay transparent images (clothing)
+    if not items:
+        return jsonify({'error': 'No items found to shuffle.'}), 404
+
+    random_item = random.choice(items)
+    image_path = os.path.join(app.config['UPLOAD_FOLDER'], random_item['image_path'])
+
+    # Update the selected clothing paths
+    if clothing_type == 'shirt':
+        selected_shirt_path = image_path
+    elif clothing_type == 'pant':
+        selected_pants_path = image_path
+
+    return jsonify({'image_path': url_for('uploaded_file', filename=random_item['image_path'])})
+
+@app.route('/video_feed')
+def video_feed():
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
 def overlay_transparent(background, overlay, x, y):
     overlay_h, overlay_w = overlay.shape[:2]
-
-    # Ensure overlay does not exceed frame size
     if x + overlay_w > background.shape[1] or y + overlay_h > background.shape[0]:
         return background
 
-    overlay_rgb = overlay[:, :, :3]  # Extract RGB channels
-    alpha_mask = overlay[:, :, 3] / 255.0  # Normalize alpha (0 to 1)
-
+    overlay_rgb = overlay[:, :, :3]
+    alpha_mask = overlay[:, :, 3] / 255.0
     roi = background[y:y+overlay_h, x:x+overlay_w]
 
-    # Blend overlay with background using the alpha channel
-    for c in range(3):  
+    for c in range(3):
         roi[:, :, c] = (1 - alpha_mask) * roi[:, :, c] + alpha_mask * overlay_rgb[:, :, c]
 
     background[y:y+overlay_h, x:x+overlay_w] = roi
     return background
 
 def generate_frames():
-    # Load t-shirt and pants images (replace with correct paths)
-    tshirt_path = "MagicMirror/app/uploads/SHIRTS/image_1.png"
-    pants_path = "MagicMirror/app/uploads/PANTS/image-2.png"
-    
-    tshirt = cv2.imread(tshirt_path, cv2.IMREAD_UNCHANGED)  # Load transparent t-shirt image
-    pants = cv2.imread(pants_path, cv2.IMREAD_UNCHANGED)  # Load transparent pants image
-
-    # Ensure the overlay images are valid before proceeding
-    if tshirt is None or pants is None or tshirt.shape[0] == 0 or tshirt.shape[1] == 0 or pants.shape[0] == 0 or pants.shape[1] == 0:
-        print("Error: Invalid or empty overlay images. Skipping overlay.")
-        while True:
-            success, frame = camera.read()
-            if not success:
-                break
-            ret, buffer = cv2.imencode('.jpg', frame)
-            frame = buffer.tobytes()
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-        return
-
-    frame_skip = 3  # Skip every 3 frames to reduce processing load
-    frame_count = 0  # Frame counter for skipping
+    """Generate frames for live video feed with clothing overlays."""
+    global selected_shirt_path, selected_pants_path
 
     while True:
-        # Read the camera frame in BGR (OpenCV default)
         success, frame = camera.read()
         if not success:
             break
 
-        # Skip frames to reduce the processing load
-        frame_count += 1
-        if frame_count % frame_skip != 0:
-            continue
-
-        # Convert the frame to RGB for pose detection only
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = pose.process(frame_rgb)
 
         if results.pose_landmarks:
             landmarks = results.pose_landmarks.landmark
-
-            # T-shirt: Using shoulder landmarks (LEFT_SHOULDER, RIGHT_SHOULDER)
-            left_shoulder = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER]
-            right_shoulder = landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER]
-
             img_h, img_w, _ = frame.shape
-            x1, y1 = int(left_shoulder.x * img_w), int(left_shoulder.y * img_h)
-            x2, y2 = int(right_shoulder.x * img_w), int(right_shoulder.y * img_h)
 
-            tshirt_width = max(int(abs(x2 - x1) * 1.4), 1)  
-            tshirt_height = max(int(tshirt.shape[0] * (tshirt_width / tshirt.shape[1])), 1)
+            if selected_shirt_path and os.path.exists(selected_shirt_path):
+                shirt = cv2.imread(selected_shirt_path, cv2.IMREAD_UNCHANGED)
+                if shirt is not None:
+                    left_shoulder = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER]
+                    right_shoulder = landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER]
+                    x1, y1 = int(left_shoulder.x * img_w), int(left_shoulder.y * img_h)
+                    x2, y2 = int(right_shoulder.x * img_w), int(right_shoulder.y * img_h)
 
-            tshirt_resized = cv2.resize(tshirt, (tshirt_width, tshirt_height))
+                    shirt_width = max(int(abs(x2 - x1) * 1.4), 1)
+                    shirt_height = max(int(shirt.shape[0] * (shirt_width / shirt.shape[1])), 1)
+                    shirt_resized = cv2.resize(shirt, (shirt_width, shirt_height))
 
-            x_center = (x1 + x2) // 2
-            x_pos = x_center - (tshirt_width // 2)
+                    x_center = (x1 + x2) // 2
+                    x_pos = x_center - (shirt_width // 2)
+                    y_pos = min(y1, y2) - shirt_height // 8
+                    frame = overlay_transparent(frame, shirt_resized, x_pos, y_pos)
 
-            y_pos = min(y1, y2) - tshirt_height // 8
+            if selected_pants_path and os.path.exists(selected_pants_path):
+                pants = cv2.imread(selected_pants_path, cv2.IMREAD_UNCHANGED)
+                if pants is not None:
+                    left_hip = landmarks[mp_pose.PoseLandmark.LEFT_HIP]
+                    right_hip = landmarks[mp_pose.PoseLandmark.RIGHT_HIP]
+                    x1, y1 = int(left_hip.x * img_w), int(left_hip.y * img_h)
+                    x2, y2 = int(right_hip.x * img_w), int(right_hip.y * img_h)
 
-            frame = overlay_transparent(frame, tshirt_resized, x_pos, y_pos)
+                    pants_width = max(int(abs(x2 - x1) * 2.8), 1)
+                    pants_height = max(int(pants.shape[0] * (pants_width / pants.shape[1])), 1)
+                    pants_resized = cv2.resize(pants, (pants_width, pants_height))
 
-            # Pants: Using hip landmarks (LEFT_HIP, RIGHT_HIP)
-            left_hip = landmarks[mp_pose.PoseLandmark.LEFT_HIP]
-            right_hip = landmarks[mp_pose.PoseLandmark.RIGHT_HIP]
+                    x_center = (x1 + x2) // 2
+                    x_pos = x_center - (pants_width // 2)
+                    y_pos = min(y1, y2)
+                    frame = overlay_transparent(frame, pants_resized, x_pos, y_pos)
 
-            x1, y1 = int(left_hip.x * img_w), int(left_hip.y * img_h)
-            x2, y2 = int(right_hip.x * img_w), int(right_hip.y * img_h)
-
-            pants_width = max(int(abs(x2 - x1) * 2.8), 1)  
-            pants_height = max(int(pants.shape[0] * (pants_width / pants.shape[1])), 1)
-
-            pants_resized = cv2.resize(pants, (pants_width, pants_height))
-
-            x_center = (x1 + x2) // 2
-            x_pos = x_center - (pants_width // 2)
-
-            y_pos = min(y1, y2)  # Position pants just below the hips
-
-            frame = overlay_transparent(frame, pants_resized, x_pos, y_pos)
-
-        # Convert the frame back to BGR (to preserve the original colors) and send to the browser
         ret, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
 
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-
-
-@app.route('/shuffle_clothing/<clothing_type>')
-def shuffle_clothing(clothing_type):
-    with get_db_connection() as conn:
-        items = conn.execute('SELECT * FROM clothing WHERE type = ?', (clothing_type,)).fetchall()
-    if not items:
-        return {'error': 'No items available to shuffle'}, 404
-    random_item = random.choice(items)
-    return {'image_path': url_for('uploaded_file', filename=random_item['image_path'])}
-
-
-@app.route('/video_feed')
-def video_feed():
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/try_it_on')
 def try_it_on():
