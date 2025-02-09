@@ -10,6 +10,12 @@ import random
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+logging.debug('Debugging information')
+logging.error('An error occurred')
+
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 
@@ -193,6 +199,7 @@ def generate_frames():
             landmarks = results.pose_landmarks.landmark
             img_h, img_w, _ = frame.shape
 
+
             if selected_shirt_path and os.path.exists(selected_shirt_path):
                 shirt = cv2.imread(selected_shirt_path, cv2.IMREAD_UNCHANGED)
                 if shirt is not None:
@@ -238,4 +245,8 @@ def try_it_on():
     return render_template('try_it_on.html')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    try:
+        app.run(debug=True)
+    except Exception as e:
+        print(f"Error starting the app: {e}")
+

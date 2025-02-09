@@ -50,7 +50,9 @@
         }
 
         .video-frame {
-            margin: 30px 0;
+            width: 800px; /* Set the width to 800px */
+            height: 500px; /* Set the height to 500px */
+            margin: 30px auto; /* Center horizontally with margin auto */
             border: 3px solid #ddd;
             border-radius: 10px;
             overflow: hidden;
@@ -74,10 +76,18 @@
                     alert(error.message);
                 });
         }
+
+        // Function to go back to home
+        function goBack() {
+            window.location.href = 'wardrobe.html'; // Replace '/' with the actual homepage URL if different
+        }
     </script>
 </head>
 <body>
     <h1>Virtual Try-On</h1>
+
+    <!-- Back to Home button -->
+    <button onclick="goBack()">Back</button>
 
     <div class="clothing-section">
         <h2>Shirt</h2>
