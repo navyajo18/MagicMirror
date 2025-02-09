@@ -3,33 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <title>Wardrobe</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fffaf0;
+      text-align: center;
+    }
+    h1 {
+      color: #6a5acd;
+    }
+    div {
+      display: inline-block;
+      margin: 10px;
+      padding: 10px;
+      border: 2px solid #5f9ea0;
+      border-radius: 10px;
+      background-color: #f0f8ff;
+      width: 200px;
+    }
+    img {
+      width: 100%;
+      border-radius: 10px;
+    }
+    form {
+      margin-top: 10px;
+    }
+    button {
+      background-color: #ff6347;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    a {
+      display: block;
+      margin: 20px auto;
+      color: #00008b;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    p {
+      color: #d2691e;
+    }
+  </style>
 </head>
 <body>
   <h1>Wardrobe</h1>
-
-  <!-- Flash Messages -->
   {% with messages = get_flashed_messages() %}
     {% if messages %}
       <p>{{ messages[0] }}</p>
     {% endif %}
   {% endwith %}
-
   {% for clothing_type, items in wardrobe.items() %}
     <h2>{{ clothing_type }}</h2>
     {% for item in items %}
       <div>
-        <img src="{{ url_for('uploaded_file', filename=item['image_path']) }}" alt="{{ clothing_type }}" width="200">
+        <img src="{{ url_for('uploaded_file', filename=item['image_path']) }}" alt="{{ clothing_type }}">
         <form method="post" action="{{ url_for('delete_item', item_id=item['id']) }}">
           <button type="submit">Remove</button>
         </form>
       </div>
     {% endfor %}
   {% endfor %}
-  
   {% if not wardrobe %}
     <p>Your wardrobe is empty!</p>
   {% endif %}
-
   <a href="{{ url_for('upload_file') }}">Upload New Clothing</a>
 </body>
 </html>
