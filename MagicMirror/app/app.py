@@ -98,7 +98,7 @@ def delete_item(item_id):
     return redirect(url_for('wardrobe'))
 
 # Video feed setup
-camera = cv2.VideoCapture(1)
+camera = cv2.VideoCapture(0)
 
 # Initialize MediaPipe Pose
 mp_pose = mp.solutions.pose
