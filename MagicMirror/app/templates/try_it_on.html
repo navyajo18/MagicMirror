@@ -3,46 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Try It On</title>
+    <title>Virtual Try-On</title>
     <style>
-        /* Video container to center the video on the page */
-        .video-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 20px;
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f4f4f4;
         }
 
-        /* Resize the video */
-        #video {
-            width: 800px; /* Set a specific width for the video */
-            height: 550px; /* Set a specific height to maintain aspect ratio */
+        h1 {
+            margin-bottom: 20px;
         }
 
-        /* Styling for the back button */
-        .back-btn {
+        .clothing-section {
+            margin: 20px 0;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             display: inline-block;
-            margin: 20px;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
+            width: 300px;
         }
 
-        .back-btn:hover {
+        img {
+            width: 200px;
+            height: auto;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
             background-color: #0056b3;
         }
+
+        .video-frame {
+            margin: 30px 0;
+            border: 3px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+        }
     </style>
+    <script>
+        // Function to shuffle and display clothing
+        function shuffleClothing(clothingType, imageId) {
+            fetch(`/shuffle_clothing/${clothingType}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('No items found to shuffle.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById(imageId).src = data.image_path;
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+        }
+    </script>
 </head>
 <body>
     <h1>Virtual Try-On</h1>
 
-    <!-- Back button -->
-    <a href="{{ url_for('wardrobe') }}" class="back-btn">Back</a>
+    <div class="clothing-section">
+        <h2>Shirt</h2>
+        <img id="shirt-image" src="" alt="Shirt Image">
+        <br>
+        <button onclick="shuffleClothing('shirt', 'shirt-image')">Shuffle Shirt</button>
+    </div>
 
-    <div class="video-container">
-        <img src="{{ url_for('video_feed') }}" alt="Video Feed" id="video">
+    <div class="clothing-section">
+        <h2>Pants</h2>
+        <img id="pants-image" src="" alt="Pants Image">
+        <br>
+        <button onclick="shuffleClothing('pant', 'pants-image')">Shuffle Pants</button>
+    </div>
+
+    <div class="video-frame">
+        <h2>Live Video Preview</h2>
+        <img src="/video_feed" alt="Video Feed" style="width: 100%; height: auto;">
     </div>
 </body>
 </html>
