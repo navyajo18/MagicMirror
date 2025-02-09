@@ -1,0 +1,107 @@
+/* Global Styles */
+body {
+    font-family: 'Cormorant Garamond', serif;
+    background-color: #F5B0CB;
+    color: #39375b;
+    text-align: center;
+    padding: 20px;
+}
+
+h1, h2 {
+    font-family: 'Cinzel Decorative', serif;
+    color: #745C97;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Button Styling */
+button, input[type="submit"] {
+    background-color: #DC6ACF;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+button:hover, input[type="submit"]:hover {
+    background-color: #745C97;
+    transform: scale(1.1);
+}
+
+/* Image Frame */
+img {
+    border-radius: 15px;
+    border: 4px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 15px rgba(116, 92, 151, 0.7);
+}
+
+/* Magic Mirror Effect */
+.video-frame img {
+    border: 8px double #745C97;
+    border-radius: 20px;
+    box-shadow: 0 0 25px rgba(220, 106, 207, 0.8);
+}
+
+/* Clothing Section */
+.clothing-section, div {
+    background-color: #F5B0CB;
+    border: 2px solid #C4BBB8;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    margin: 10px auto;
+    width: 220px;
+}
+
+/* Links */
+a {
+    color: #DC6ACF;
+    font-weight: bold;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+a:hover {
+    color: #745C97;
+}
+
+/* Form Styling */
+form {
+    background-color: #C4BBB8;
+    border: 1px solid #745C97;
+    padding: 25px;
+    border-radius: 10px;
+    display: inline-block;
+    width: 300px;
+}
+
+input, select {
+    padding: 8px;
+    width: 100%;
+    margin-bottom: 15px;
+    border: 1px solid #DC6ACF;
+    border-radius: 5px;
+}
+
+/* Flash Message */
+p {
+    background-color: #F5B0CB;
+    color: #745C97;
+    font-weight: bold;
+    padding: 10px;
+    border: 2px solid #DC6ACF;
+    border-radius: 10px;
+}
+
+/* Wardrobe Box Adjustments */
+div img {
+    width: 180px;
+    height: auto;
+    margin: 0 auto 10px;
+}
+
+div form {
+    margin-top: 5px;
+}

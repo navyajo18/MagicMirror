@@ -161,8 +161,21 @@ def predict_clothing_quality(shirt_path, pants_path):
     # Calculate the average prediction of shirt and pants for the combination
     combined_prediction = np.mean([shirt_prediction, pants_prediction])
 
-    # Return 'Good' or 'Bad' based on the prediction
-    return 'Good' if combined_prediction > 0.5 else 'Bad'
+        # Return a magical message based on the prediction
+    positive_messages = [
+        "Ah, splendid! A charming combination indeed!",
+        "Mirror says: You radiate style today!",
+        "Fashion enchantment successful!"
+    ]
+
+    negative_messages = [
+        "The mirror senses discord in this attire...",
+        "Hmm... perhaps a different ensemble would cast a better spell.",
+        "Mirror verdict: This look needs some magic rework."
+    ]
+
+    return random.choice(positive_messages) if combined_prediction > 0.5 else random.choice(negative_messages)
+
 
 @app.route('/video_feed')
 def video_feed():
