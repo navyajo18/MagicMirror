@@ -6,6 +6,8 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Needed for flashing messages
 
+# Directory to store uploaded images
+UPLOAD_FOLDER = 'uploads'
 # Directory to store uploaded images (inside app folder)
 UPLOAD_FOLDER = os.path.join(app.root_path, 'uploads')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
