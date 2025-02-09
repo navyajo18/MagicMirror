@@ -151,6 +151,7 @@ def generate_frames():
         if not success:
             break
 
+        frame = cv2.flip(frame, 1)
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = pose.process(frame_rgb)
 
