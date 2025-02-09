@@ -5,6 +5,7 @@ from werkzeug.utils import secure_filename
 import cv2
 import mediapipe as mp
 import numpy as np
+import random  # Import to handle random selection
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Needed for flashing messages
@@ -212,6 +213,15 @@ def generate_frames():
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
+
+@app.route('/shuffle_clothing/<clothing_type>')
+def shuffle_clothing(clothing_type):
+    with get_db_connection() as conn:
+        items = conn.execute('SELECT * FROM clothing WHERE type = ?', (clothing_type,)).fetchall()
+    if not items:
+        return {'error': 'No items available to shuffle'}, 404
+    random_item = random.choice(items)
+    return {'image_path': url_for('uploaded_file', filename=random_item['image_path'])}
 
 
 @app.route('/video_feed')
