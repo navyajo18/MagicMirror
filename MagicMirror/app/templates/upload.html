@@ -10,7 +10,7 @@
       text-align: center;
     }
     h1 {
-      color: #228b22;
+      color: purple;
     }
     form {
       background-color: #ffe4c4;
@@ -37,6 +37,18 @@
       font-weight: bold;
       text-decoration: none;
     }
+
+    .upload-image {
+  margin-top: 20px;
+  max-width: 500px;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
   </style>
 </head>
 <body>
@@ -46,6 +58,7 @@
       <p>{{ messages[0] }}</p>
     {% endif %}
   {% endwith %}
+  
   <form method="post" enctype="multipart/form-data" action="/">
     <input type="file" name="clothingImage" required>
     <select name="clothingType">
@@ -55,6 +68,10 @@
     </select>
     <input type="submit" value="Upload">
   </form>
+
+  <!-- Add your image here -->
+  <img src="static\images\FinalMirror.png" alt="Magic Mirror" class="upload-image">
+
   <a href="{{ url_for('wardrobe') }}">View Wardrobe</a>
 </body>
 </html>
